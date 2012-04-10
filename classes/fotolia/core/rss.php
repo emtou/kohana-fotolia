@@ -34,6 +34,45 @@ abstract class Fotolia_Core_RSS extends Fotolia
 {
 
   /**
+   * Execute a RSS request to the fotolia picture library
+   *
+   * @param string $uri RSS URI
+   *
+   * @return string RSS stream
+   */
+  protected function _execute_request($uri)
+  {
+    return '<rss><items></items></rss>';
+  }
+
+
+  /**
+   * Parse a RSS stream for normalised results
+   *
+   * @param string $rss_stream RSS stream
+   *
+   * @return array results
+   */
+  protected function _parse_results($rss_stream)
+  {
+    return array();
+  }
+
+
+  /**
+   * Prepare the RSS URL to query the Fotolia picture library for results matching keywords
+   *
+   * @param string|array $keywords single keyword or list of keywords
+   *
+   * @return string RSS URI
+   */
+  protected function _prepare_request_uri($keywords = '')
+  {
+    return 'http://rss.HACKME';
+  }
+
+
+  /**
    * Overload Fotolia::factory() to disable
    *
    * @param string $method Fotolia interaction method (API or RSS)
@@ -61,7 +100,11 @@ abstract class Fotolia_Core_RSS extends Fotolia
    */
   public function search($keywords = '')
   {
-    return array();
+    $uri = $this->_prepare_request_uri($keywords);
+
+    $rss = $this->_execute_request($uri);
+
+    return $this->_parse_results($rss);
   }
 
 } // End Fotolia_Core_RSS
