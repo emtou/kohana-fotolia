@@ -32,5 +32,31 @@ defined('SYSPATH') OR die('No direct access allowed.');
  */
 abstract class Fotolia_Core
 {
+  public $config = NULL;          /** Configuration (from file) */
+
+
+  /**
+   * Creates and initialises a Fotolia instance
+   *
+   * Can't be called, the factory() method must be used.
+   *
+   * @return Fotolia
+   */
+  protected function __construct()
+  {
+    // Load configuration from file
+    ($this->config === NULL) and $this->config = Kohana::$config->load('fotolia');
+  }
+
+
+  /**
+   * Create a chainable instance of a Fotolia object
+   *
+   * @return Fotolia
+   */
+  public static function factory()
+  {
+    return new Fotolia;
+  }
 
 } // End class Fotolia_Core
