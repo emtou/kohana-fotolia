@@ -17,5 +17,5 @@
 defined('SYSPATH') OR die('No direct access allowed.');
 
 return array(
-  'method' => Fotolia::METHOD_RSS,
+
 );
