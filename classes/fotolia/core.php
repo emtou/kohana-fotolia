@@ -32,6 +32,10 @@ defined('SYSPATH') OR die('No direct access allowed.');
  */
 abstract class Fotolia_Core
 {
+  const METHOD_RSS = 'rss';
+
+  protected $_method = NULL;
+
   public $config = NULL;          /** Configuration (from file) */
 
 
@@ -50,6 +54,19 @@ abstract class Fotolia_Core
 
 
   /**
+   * Searches the Fotolia picture library via RSS for results matching keywords
+   *
+   * @param string|array $keywords single keyword or list of keywords
+   *
+   * @return array list of results
+   */
+  protected function _search_rss($keywords = '')
+  {
+    return array();
+  }
+
+
+  /**
    * Create a chainable instance of a Fotolia object
    *
    * @return Fotolia
@@ -57,6 +74,53 @@ abstract class Fotolia_Core
   public static function factory()
   {
     return new Fotolia;
+  }
+
+
+  /**
+   * Gets or sets the method to interact with the Fotolia API
+   *
+   * @param string $method method (in set mode)
+   *
+   * @return string|NULL method (in get mode)
+   */
+  public function method($method = NULL)
+  {
+    if (is_null($method))
+    {
+      if ( ! is_null($this->_method))
+        return $this->_method;
+
+      if ( ! is_null($this->config->get('method')))
+        return $this->config['method'];
+
+      return Fotolia::METHOD_RSS;
+    }
+
+    $this->_method = $method;
+  }
+
+
+  /**
+   * Searches the Fotolia picture library for results matching keywords
+   *
+   * @param string|array $keywords single keyword or list of keywords
+   *
+   * @return array list of results
+   *
+   * @throws Fotolia_Exception Can't handle search method :method.
+   */
+  public function search($keywords = '')
+  {
+    $method_name = '_search_'.strtolower($this->method());
+    if ( ! method_exists($this, $method_name))
+    {
+      throw new Fotolia_Exception(
+        __('Can\'t handle search method :method.', array(':method' => $this->method()))
+      );
+    }
+
+    return call_user_func(array($this, $method_name), $keywords);
   }
 
 } // End class Fotolia_Core
