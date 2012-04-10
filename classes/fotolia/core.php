@@ -32,6 +32,7 @@ defined('SYSPATH') OR die('No direct access allowed.');
  */
 abstract class Fotolia_Core
 {
+  const METHOD_API = 'api';
   const METHOD_RSS = 'rss';
 
   protected $_method = NULL;
@@ -50,6 +51,46 @@ abstract class Fotolia_Core
   {
     // Load configuration from file
     ($this->config === NULL) and $this->config = Kohana::$config->load('fotolia');
+  }
+
+
+  /**
+   * Load the Fotolia API object definition
+   *
+   * @return NULL
+   *
+   * @throws Fotolia_Exception Can't load Fotolia API.
+   */
+  protected function _load_fotolia_api()
+  {
+    if ( ! class_exists('Fotolia_Api', FALSE))
+    {
+      $fotolia_api_file = Kohana::find_file('vendor', 'Fotolia-API/php/fotolia-api');
+
+      if ($fotolia_api_file === FALSE)
+      {
+        throw new Fotolia_Exception(
+          __('Can\'t load Fotolia API.')
+        );
+      }
+
+      include $fotolia_api_file;
+    }
+  }
+
+
+  /**
+   * Searches the Fotolia picture library via the API for results matching keywords
+   *
+   * @param string|array $keywords single keyword or list of keywords
+   *
+   * @return array list of results
+   */
+  protected function _search_api($keywords = '')
+  {
+    $this->_load_fotolia_api();
+
+    return array();
   }
 
 
@@ -80,9 +121,11 @@ abstract class Fotolia_Core
   /**
    * Gets or sets the method to interact with the Fotolia API
    *
+   * Chainable method (in set mode)
+   *
    * @param string $method method (in set mode)
    *
-   * @return string|NULL method (in get mode)
+   * @return string|Fotolia method (in get mode) or this
    */
   public function method($method = NULL)
   {
@@ -98,6 +141,8 @@ abstract class Fotolia_Core
     }
 
     $this->_method = $method;
+
+    return $this;
   }
 
 
