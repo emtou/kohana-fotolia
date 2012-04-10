@@ -82,7 +82,7 @@ abstract class Fotolia_Core_RSS extends Fotolia
   {
     $uri = 'http://rss.fotolia.com?';
 
-    $this->param('keywords', $keywords);
+    $this->param('k', $keywords);
 
     return $uri.$this->_uri_params();
   }
