@@ -32,7 +32,17 @@ defined('SYSPATH') OR die('No direct access allowed.');
  */
 abstract class Fotolia_Core_RSS extends Fotolia
 {
-  protected $_params = array(); /** RSS URI params */
+  protected $_params         = array(); /** RSS URI params */
+  protected $_default_params = array(
+    'start'       => 0,
+    'limit'       => 30,
+    'k'           => '',
+    'p'           => '',
+    'size'        => 30,
+    'IDZone'      => 2,
+    'orderbydate' => 0,
+    'partner'     => '',
+  ); /** RSS URI default params */
 
 
   /**
