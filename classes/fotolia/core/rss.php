@@ -32,6 +32,8 @@ defined('SYSPATH') OR die('No direct access allowed.');
  */
 abstract class Fotolia_Core_RSS extends Fotolia
 {
+  protected $_params = array(); /** RSS URI params */
+
 
   /**
    * Execute a RSS request to the fotolia picture library
@@ -68,7 +70,22 @@ abstract class Fotolia_Core_RSS extends Fotolia
    */
   protected function _prepare_request_uri($keywords = '')
   {
-    return 'http://rss.HACKME';
+    $uri = 'http://rss.fotolia.com?';
+
+    $this->param('keywords', $keywords);
+
+    return $uri.$this->_uri_params();
+  }
+
+
+  /**
+   * Return escaped URI params
+   *
+   * @return string escaped URI params
+   */
+  protected function _uri_params()
+  {
+    return 'foo=bar';
   }
 
 
@@ -88,6 +105,37 @@ abstract class Fotolia_Core_RSS extends Fotolia
     );
 
     unset($method);
+  }
+
+
+  /**
+   * Get or set a query param
+   *
+   * Chainable method.
+   *
+   * @param string $alias alias of the param
+   * @param mixed  $value optional value of the param (in set mode)
+   *
+   * @return mixed|Fotolia_RSS value of the param (in set mode) or this
+   *
+   * @throws Fotolia_Exception RSS param :alias does not exist.
+   */
+  public function param($alias, $value = NULL)
+  {
+    if ( ! is_null($value))
+    {
+      $this->_params[$alias] = $value;
+      return $this;
+    }
+
+    if ( ! array_key_exists($alias, $this->_params))
+    {
+      throw new Fotolia_Exception(
+        __('RSS param :alias does not exist.', array(':alias' => $alias))
+      );
+    }
+
+    return $this->_params[$alias];
   }
 
 
