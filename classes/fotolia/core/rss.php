@@ -45,6 +45,21 @@ abstract class Fotolia_Core_RSS extends Fotolia
   ); /** RSS URI default params */
 
 
+
+  /**
+   * Creates and initialises a Fotolia_RSS instance
+   *
+   * Can't be called, the factory() method must be used.
+   *
+   * @return Fotolia
+   */
+  protected function __construct()
+  {
+    parent::__construct();
+
+    $this->_reset_params();
+  }
+
   /**
    * Execute a RSS request to the fotolia picture library
    *
@@ -89,13 +104,47 @@ abstract class Fotolia_Core_RSS extends Fotolia
 
 
   /**
+   * Resets the RSS params from configuration
+   *
+   * Chainable method
+   *
+   * @return Fotolia_RSS
+   */
+  protected function _reset_params()
+  {
+    $this->_params = $this->config->get('rss')['params'];
+  }
+
+
+  /**
    * Return escaped URI params
    *
    * @return string escaped URI params
    */
   protected function _uri_params()
   {
-    return 'foo=bar';
+    $params = array();
+
+    foreach ($this->_params as $alias => $value)
+    {
+      if ( ! array_key_exists($alias, $this->_default_params))
+      {
+        throw new Fotolia_Exception(
+          __('Parameter :alias not handled.', array(':alias', $alias))
+        );
+      }
+
+      if ($value != $this->_default_params[$alias])
+      {
+        if (is_array($value))
+        {
+          $value = implode(' ', $value);
+        }
+        $params[] = urlencode($alias).'='.urlencode($value);
+      }
+    }
+
+    return implode('&', $params);
   }
 
 
