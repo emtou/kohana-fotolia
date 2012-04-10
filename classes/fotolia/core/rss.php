@@ -63,26 +63,43 @@ abstract class Fotolia_Core_RSS extends Fotolia
   /**
    * Execute a RSS request to the fotolia picture library
    *
-   * @param string $uri RSS URI
+   * @param string $url RSS URL
    *
    * @return string RSS stream
    */
-  protected function _execute_request($uri)
+  protected function _execute_request($url)
   {
-    return '<rss><items></items></rss>';
+    return self::parse_rss($url);
   }
 
 
   /**
    * Parse a RSS stream for normalised results
    *
-   * @param string $rss_stream RSS stream
+   * @param array $rss RSS items
    *
    * @return array results
    */
-  protected function _parse_results($rss_stream)
+  protected function _parse_results(array $rss)
   {
-    return array();
+    $items = array();
+
+    if (array_key_exists('RSS', $rss)
+        and array_key_exists('CHANNEL', $rss['RSS'])
+        and array_key_exists('ITEM', $rss['RSS']['CHANNEL'])
+        and is_array($rss['RSS']['CHANNEL']['ITEM']))
+    {
+      foreach ($rss['RSS']['CHANNEL']['ITEM'] as $item)
+      {
+        $items[] = array(
+          'title' => $item['TITLE'],
+          'link'  => $item['LINK'],
+          'image' => $item['DESCRIPTION'],
+        );
+      }
+    }
+
+    return $items;
   }
 
 
@@ -93,13 +110,13 @@ abstract class Fotolia_Core_RSS extends Fotolia
    *
    * @return string RSS URI
    */
-  protected function _prepare_request_uri($keywords = '')
+  protected function _prepare_request_url($keywords = '')
   {
-    $uri = 'http://rss.fotolia.com?';
+    $url = 'http://rss.fotolia.com?';
 
     $this->param('k', $keywords);
 
-    return $uri.$this->_uri_params();
+    return $url.$this->_uri_params();
   }
 
 
@@ -199,6 +216,66 @@ abstract class Fotolia_Core_RSS extends Fotolia
 
 
   /**
+   * Fetch a RSS feed
+   *
+   * @param string $url URL of the RSS feed
+   *
+   * @return array list of results
+   *
+   * @see http://www.stemkoski.com/how-to-easily-parse-a-rss-feed-with-php-4-or-php-5/
+   */
+  public static function parse_rss($url)
+  {
+    $feedeed = implode('', file($url));
+    $parser  = xml_parser_create();
+
+    xml_parse_into_struct($parser, $feedeed, $valueals);
+    xml_parser_free($parser);
+
+    foreach ($valueals as $keyey => $valueal)
+    {
+      if ($valueal['type'] != 'cdata')
+      {
+        $item[$keyey] = $valueal;
+      }
+    }
+
+    $i = 0;
+
+    foreach ($item as $value)
+    {
+      if ($value['type'] == 'open')
+      {
+        $i++;
+        $itemame[$i] = $value['tag'];
+      }
+      elseif ($value['type'] == 'close')
+      {
+        $feed = $values[$i];
+        $item = $itemame[$i];
+        $i--;
+
+        if (array_key_exists($i, $values)
+            and count($values[$i])>1)
+        {
+          $values[$i][$item][] = $feed;
+        }
+        else
+        {
+          $values[$i][$item] = $feed;
+        }
+      }
+      else
+      {
+        $values[$i][$value['tag']] = $value['value'];
+      }
+    }
+
+    return $values[0];
+  }
+
+
+  /**
    * Searches the Fotolia picture library via RSS for results matching keywords
    *
    * @param string|array $keywords single keyword or list of keywords
@@ -207,9 +284,9 @@ abstract class Fotolia_Core_RSS extends Fotolia
    */
   public function search($keywords = '')
   {
-    $uri = $this->_prepare_request_uri($keywords);
+    $url = $this->_prepare_request_url($keywords);
 
-    $rss = $this->_execute_request($uri);
+    $rss = $this->_execute_request($url);
 
     return $this->_parse_results($rss);
   }
