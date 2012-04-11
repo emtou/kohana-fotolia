@@ -51,8 +51,32 @@ abstract class Fotolia_Core
    */
   protected function __construct($set)
   {
-    // Load configuration from file
-    ($this->config === NULL) and $this->config = Kohana::$config->load('fotolia')->get(strtolower($this::METHOD))[$set];
+    if (is_null($this->config))
+    {
+      $config = Kohana::$config->load('fotolia');
+
+      $config_method = $config->get(strtolower($this::METHOD), FALSE);
+      if ($config_method === FALSE)
+      {
+        throw new Fotolia_Exception(
+          'Can\'t load configuration for :method method.',
+          array(':method' => $this::METHOD)
+        );
+      }
+
+      if ( ! array_key_exists($set, $config_method))
+      {
+        throw new Fotolia_Exception(
+          'Can\'t load :set configuration set for :method method.',
+          array(
+            ':set' => $set,
+            ':method' => $this::METHOD,
+          )
+        );
+      }
+
+      $this->config = $config_method[$set];
+    }
 
     $this->_reset_search_params();
   }
