@@ -34,8 +34,66 @@ abstract class Fotolia_Core_API extends Fotolia
 {
   const METHOD = 'API';        /** Method (used to read configuration) */
 
-  protected $_api     = NULL;   /** Fotolia API instance */
-  protected $_api_key = '';     /** Fotolia API key */
+  protected $_api = NULL;   /** Fotolia API instance */
+
+  /** search default params */
+  protected $_default_search_params = array(
+    'language_id'                       => 2,
+    'words'                             => NULL,
+    'creator_id'                        => NULL,
+    'cat1_id'                           => NULL,
+    'cat2_id'                           => NULL,
+    'gallery_id'                        => NULL,
+    'country_id'                        => NULL,
+    'media_id'                          => NULL,
+    'model_id'                          => NULL,
+    'serie_id'                          => NULL,
+    'similia_id'                        => NULL,
+    'filters.content_type:photo'        => 0,
+    'filters.content_type:illustration' => 0,
+    'filters.content_type:vector'       => 0,
+    'filters.content_type:video'        => 0,
+    'filters.content_type:all'          => 1,
+    'filters.offensive:2'               => 0,
+    'filters.isolated:on'               => 0,
+    'filters.panoramic:on'              => 0,
+    'filters.license_L:on'              => 0,
+    'filters.license_XL:on'             => 0,
+    'filters.license_XXL:on'            => 0,
+    'filters.license_V_HD1080:on'       => 0,
+    'filters.license_V_HD720:on'        => 0,
+    'filters.license_X:on'              => 0,
+    'filters.orientation'               => 'all',
+    'filters.age'                       => 'all',
+    'filters.video_duration'            => 'all',
+    'filters.max_price_xs'              => 'all',
+    'filters.max_price_x'               => NULL,
+    'filters.colors'                    => NULL,
+    'order'                             => 'relevance',
+    'limit'                             => 32,
+    'offset'                            => 0,
+    'thumbnail_size'                    => 110,
+    'detail_level'                      => NULL,
+    'result_columns'                    => array(
+                                            'nb_results',
+                                            'id',
+                                            'title',
+                                            'creator_name',
+                                            'creator_id',
+                                            'thumbnail_url',
+                                            'thumbnail_html_tag',
+                                            'thumbnail_width',
+                                            'thumbnail_height',
+                                            'affiliation_link',
+                                            'thumbnail_110_url',
+                                            'thumbnail_110_width',
+                                            'thumbnail_110_height',
+                                            'creation_date',
+                                            'media_type_id',
+                                            'flv_url',
+                                            'licenses',
+                                           ),
+  );
 
 
   /**
@@ -72,7 +130,7 @@ abstract class Fotolia_Core_API extends Fotolia
       if ($fotolia_api_file === FALSE)
       {
         throw new Fotolia_Exception(
-          __('Can\'t load Fotolia API.')
+          'Can\'t load Fotolia API.'
         );
       }
 
@@ -86,13 +144,75 @@ abstract class Fotolia_Core_API extends Fotolia
 
 
   /**
-   * Init the internal API instance with the key
+   * Init the internal API instance with the configured key
+   *
+   * Chainable method.
    *
    * @return NULL
    */
   protected function _init_fotolia_api()
   {
-    $this->_api = new Fotolia_Api($this->_api_key);
+    $this->init_fotolia_api_with_key($this->config['api_key']);
+
+    return $this;
+  }
+
+
+  /**
+   * Init the internal API instance with the given key
+   *
+   * Chainable method.
+   *
+   * @param string $api_key current API key
+   *
+   * @return NULL
+   */
+  public function init_fotolia_api_with_key($api_key)
+  {
+    $this->_api = new FotoliaApi($api_key);
+
+    return $this;
+  }
+
+
+  /**
+   * Return prepared search params
+   *
+   * @return array prepared search params
+   */
+  protected function _prepare_search_params()
+  {
+    $params = parent::_prepare_search_params();
+
+    $prepared_params = array();
+
+    foreach ($params as $alias => $value)
+    {
+      if (preg_match('/\./', $alias))
+      {
+        $subaliases = explode('.', $alias);
+        if (count($subaliases) > 2)
+        {
+          throw new Fotolia_Exception(
+            'Can\'t prepare search param :alias with more than 1 sub-level.',
+            array(':alias' => $alias)
+          );
+        }
+
+        if ( ! array_key_exists($subaliases[0], $prepared_params))
+        {
+          $prepared_params[$subaliases[0]] = array();
+        }
+
+        $prepared_params[$subaliases[0]][$subaliases[1]] = $value;
+      }
+      else
+      {
+        $prepared_params[$alias] = $value;
+      }
+    }
+
+    return $prepared_params;
   }
 
 
@@ -109,10 +229,11 @@ abstract class Fotolia_Core_API extends Fotolia
   public static function factory($method, $set = 'default')
   {
     throw new Fotolia_Exception(
-      __('Direct factory method should never be used.')
+      'Direct factory method should never be used.'
     );
 
     unset($method);
+    unset($set);
   }
 
 
@@ -120,14 +241,33 @@ abstract class Fotolia_Core_API extends Fotolia
    * Searches the Fotolia picture library for results matching keywords
    *
    * @param string|array $keywords single keyword or list of keywords
+   * @param array        $params   search params
    *
    * @return array list of results
    *
    * @throws Fotolia_Exception Can't handle search method :method.
    */
-  public function search($keywords = '')
+  public function search($keywords = '', array $params = array())
   {
-    return array();
+    foreach ($params as $alias => $value)
+    {
+      $this->search_param($alias, $value);
+    }
+
+    $this->search_param('words', $keywords);
+
+    $params         = $this->_prepare_search_params();
+    $result_columns = NULL;
+
+    if (array_key_exists('result_columns', $params))
+    {
+      $result_columns = $params['result_columns'];
+      unset($params['result_columns']);
+    }
+
+    $results = $this->get_search_results($params, $result_columns);
+
+    return $results;
   }
 
 
@@ -164,7 +304,7 @@ abstract class Fotolia_Core_API extends Fotolia
    *
    * Direct call to the Fotolia API.
    *
-   * @param array $search_params  search arams
+   * @param array $search_params  search params
    * @param array $result_columns if specified, a list a columns you want in the resultset
    *
    * @return array

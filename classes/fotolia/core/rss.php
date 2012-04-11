@@ -34,8 +34,8 @@ abstract class Fotolia_Core_RSS extends Fotolia
 {
   const METHOD = 'RSS';        /** Method (used to read configuration) */
 
-  protected $_params         = array(); /** RSS URI params */
-  protected $_default_params = array(
+  /** RSS URI default params */
+  protected $_default_search_params = array(
     'start'       => 0,
     'limit'       => 30,
     'k'           => '',
@@ -44,25 +44,8 @@ abstract class Fotolia_Core_RSS extends Fotolia
     'IDZone'      => 2,
     'orderbydate' => 0,
     'partner'     => '',
-  ); /** RSS URI default params */
+  );
 
-
-
-  /**
-   * Creates and initialises a Fotolia_RSS instance
-   *
-   * Can't be called, the factory() method must be used.
-   *
-   * @param string $set set to use
-   *
-   * @return Fotolia
-   */
-  protected function __construct($set)
-  {
-    parent::__construct($set);
-
-    $this->_reset_params();
-  }
 
   /**
    * Execute a RSS request to the fotolia picture library
@@ -118,54 +101,32 @@ abstract class Fotolia_Core_RSS extends Fotolia
   {
     $url = 'http://rss.fotolia.com?';
 
-    $this->param('k', $keywords);
+    $this->search_param('k', $keywords);
 
-    return $url.$this->_uri_params();
+    return $url.implode('&', $this->_prepare_search_params());
   }
 
 
   /**
-   * Resets the RSS params from configuration
+   * Return prepared search params
    *
-   * Chainable method
-   *
-   * @return Fotolia_RSS
+   * @return array prepared search params
    */
-  protected function _reset_params()
+  protected function _prepare_search_params()
   {
-    $this->_params = $this->config['params'];
-  }
+    $params = parent::_prepare_search_params();
 
-
-  /**
-   * Return escaped URI params
-   *
-   * @return string escaped URI params
-   */
-  protected function _uri_params()
-  {
-    $params = array();
-
-    foreach ($this->_params as $alias => $value)
+    foreach ($params as $alias => $value)
     {
-      if ( ! array_key_exists($alias, $this->_default_params))
+      if (is_array($value))
       {
-        throw new Fotolia_Exception(
-          __('Parameter :alias not handled.', array(':alias', $alias))
-        );
+        $value = implode(' ', $value);
       }
 
-      if ($value != $this->_default_params[$alias])
-      {
-        if (is_array($value))
-        {
-          $value = implode(' ', $value);
-        }
-        $params[] = urlencode($alias).'='.urlencode($value);
-      }
+      $params[$alias] = urlencode($alias).'='.urlencode($value);
     }
 
-    return implode('&', $params);
+    return $params;
   }
 
 
@@ -182,41 +143,10 @@ abstract class Fotolia_Core_RSS extends Fotolia
   public static function factory($method, $set = 'default')
   {
     throw new Fotolia_Exception(
-      __('Direct factory method should never be used.')
+      'Direct factory method should never be used.'
     );
 
     unset($method);
-  }
-
-
-  /**
-   * Get or set a query param
-   *
-   * Chainable method.
-   *
-   * @param string $alias alias of the param
-   * @param mixed  $value optional value of the param (in set mode)
-   *
-   * @return mixed|Fotolia_RSS value of the param (in set mode) or this
-   *
-   * @throws Fotolia_Exception RSS param :alias does not exist.
-   */
-  public function param($alias, $value = NULL)
-  {
-    if ( ! is_null($value))
-    {
-      $this->_params[$alias] = $value;
-      return $this;
-    }
-
-    if ( ! array_key_exists($alias, $this->_params))
-    {
-      throw new Fotolia_Exception(
-        __('RSS param :alias does not exist.', array(':alias' => $alias))
-      );
-    }
-
-    return $this->_params[$alias];
   }
 
 
@@ -284,11 +214,17 @@ abstract class Fotolia_Core_RSS extends Fotolia
    * Searches the Fotolia picture library via RSS for results matching keywords
    *
    * @param string|array $keywords single keyword or list of keywords
+   * @param array        $params   search params
    *
    * @return array list of results
    */
-  public function search($keywords = '')
+  public function search($keywords = '', array $params = array())
   {
+    foreach ($params as $alias => $value)
+    {
+      $this->search_param($alias, $value);
+    }
+
     $url = $this->_prepare_request_url($keywords);
 
     $rss = $this->_execute_request($url);
