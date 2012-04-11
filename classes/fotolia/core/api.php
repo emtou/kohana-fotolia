@@ -32,6 +32,8 @@ defined('SYSPATH') OR die('No direct access allowed.');
  */
 abstract class Fotolia_Core_API extends Fotolia
 {
+  const METHOD = 'API';        /** Method (used to read configuration) */
+
   protected $_api     = NULL;   /** Fotolia API instance */
   protected $_api_key = '';     /** Fotolia API key */
 
@@ -41,11 +43,13 @@ abstract class Fotolia_Core_API extends Fotolia
    *
    * Can't be called, the factory() method must be used.
    *
+   * @param string $set set to use
+   *
    * @return Fotolia
    */
-  protected function __construct()
+  protected function __construct($set)
   {
-    parent::__construct();
+    parent::__construct($set);
 
     $this->_load_fotolia_api();
     $this->_init_fotolia_api();
@@ -96,12 +100,13 @@ abstract class Fotolia_Core_API extends Fotolia
    * Overload Fotolia::factory() to disable
    *
    * @param string $method Fotolia interaction method (API or RSS)
+   * @param string $set    set to use
    *
    * @return NULL
    *
    * @throws Fotolia_Exception
    */
-  public static function factory($method)
+  public static function factory($method, $set = 'default')
   {
     throw new Fotolia_Exception(
       __('Direct factory method should never be used.')

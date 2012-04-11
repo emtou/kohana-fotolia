@@ -32,6 +32,8 @@ defined('SYSPATH') OR die('No direct access allowed.');
  */
 abstract class Fotolia_Core
 {
+  const METHOD = 'NOTSET';        /** Method (used to read configuration) */
+
   public $config = NULL;          /** Configuration (from file) */
 
 
@@ -40,12 +42,14 @@ abstract class Fotolia_Core
    *
    * Can't be called, the factory() method must be used.
    *
+   * @param string $set set to use
+   *
    * @return Fotolia
    */
-  protected function __construct()
+  protected function __construct($set)
   {
     // Load configuration from file
-    ($this->config === NULL) and $this->config = Kohana::$config->load('fotolia');
+    ($this->config === NULL) and $this->config = Kohana::$config->load('fotolia')->get(strtolower(self::METHOD))[$set];
   }
 
 
@@ -53,12 +57,13 @@ abstract class Fotolia_Core
    * Create a chainable instance of a Fotolia object
    *
    * @param string $method Fotolia interaction method (API or RSS)
+   * @param string $set    set to use
    *
    * @return Fotolia
    *
    * @throws Fotolia_Exception Fotolia interaction method :method not handled.
    */
-  public static function factory($method)
+  public static function factory($method, $set = 'default')
   {
     $class_name = 'Fotolia_'.$method;
 
@@ -69,7 +74,7 @@ abstract class Fotolia_Core
       );
     }
 
-    return new $class_name;
+    return new $class_name($set);
   }
 
 } // End class Fotolia_Core
