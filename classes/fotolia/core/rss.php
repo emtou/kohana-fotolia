@@ -61,6 +61,38 @@ abstract class Fotolia_Core_RSS extends Fotolia
 
 
   /**
+   * Returns a collection with given search results
+   *
+   * @param array $results search results as given by the Fotolia API
+   *
+   * @return Fotolia_Collection
+   */
+  protected function _parse_search_results(array $results)
+  {
+    $collection = new Fotolia_Collection;
+
+    if (array_key_exists('RSS', $results)
+        and array_key_exists('CHANNEL', $results['RSS'])
+        and array_key_exists('ITEM', $results['RSS']['CHANNEL'])
+        and is_array($results['RSS']['CHANNEL']['ITEM']))
+    {
+      foreach ($results['RSS']['CHANNEL']['ITEM'] as $result)
+      {
+        $item = Model::factory('fotolia_result');
+
+        foreach ($result as $key => $value)
+        {
+          $item->$key = $value;
+        }
+
+        $collection->append($item);
+      }
+    }
+
+    return $collection;
+  }
+
+  /**
    * Parse a RSS stream for normalised results
    *
    * @param array $rss RSS items
@@ -71,20 +103,7 @@ abstract class Fotolia_Core_RSS extends Fotolia
   {
     $items = array();
 
-    if (array_key_exists('RSS', $rss)
-        and array_key_exists('CHANNEL', $rss['RSS'])
-        and array_key_exists('ITEM', $rss['RSS']['CHANNEL'])
-        and is_array($rss['RSS']['CHANNEL']['ITEM']))
-    {
-      foreach ($rss['RSS']['CHANNEL']['ITEM'] as $item)
-      {
-        $items[] = array(
-          'title' => $item['TITLE'],
-          'link'  => $item['LINK'],
-          'image' => $item['DESCRIPTION'],
-        );
-      }
-    }
+
 
     return $items;
   }
@@ -229,7 +248,7 @@ abstract class Fotolia_Core_RSS extends Fotolia
 
     $rss = $this->_execute_request($url);
 
-    return $this->_parse_results($rss);
+    return $this->_parse_search_results($rss);
   }
 
 } // End Fotolia_Core_RSS

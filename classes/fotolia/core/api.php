@@ -267,7 +267,38 @@ abstract class Fotolia_Core_API extends Fotolia
 
     $results = $this->get_search_results($params, $result_columns);
 
-    return $results;
+    return $this->_parse_search_results($results);
+  }
+
+
+  /**
+   * Returns a collection with given search results
+   *
+   * @param array $results search results as given by the Fotolia API
+   *
+   * @return Fotolia_Collection
+   */
+  protected function _parse_search_results(array $results)
+  {
+    $collection = new Fotolia_Collection;
+
+    $i = 0;
+    while (array_key_exists($i, $results))
+    {
+      $result = $results[$i];
+
+      $item = Model::factory('fotolia_result');
+
+      foreach ($result as $key => $value)
+      {
+        $item->$key = $value;
+      }
+
+      $collection->append($item);
+
+      ++$i;
+    }
+    return $collection;
   }
 
 
