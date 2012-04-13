@@ -282,6 +282,8 @@ abstract class Fotolia_Core_API extends Fotolia
   {
     $collection = new Fotolia_Collection;
 
+    $collection->max_items = $results['nb_results'];
+
     $i = 0;
     while (array_key_exists($i, $results))
     {
