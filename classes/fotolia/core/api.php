@@ -298,6 +298,13 @@ abstract class Fotolia_Core_API extends Fotolia
 
       ++$i;
     }
+
+    // semihack : only believe nb_results if items are found
+    if ($i > 0)
+    {
+      $collection->max_items = $results['nb_results'];
+    }
+
     return $collection;
   }
 

@@ -35,6 +35,8 @@ abstract class Fotolia_Core_Collection implements Iterator, Countable, SeekableI
   protected $_items    = NULL; /** Items in the collection */
   protected $_iterator = NULL; /** Iterator on the items */
 
+  public $max_items = -1;      /** maximum retrievable number of items */
+
 
   /**
    * Init the internal collection and its iterator
